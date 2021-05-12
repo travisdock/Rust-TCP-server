@@ -33,7 +33,7 @@ fn main() {
 
                         println!("{}: {:?}", addr, msg);
                         tx.send(msg).expect("failed to send msg to rx");
-                    }, 
+                    },
                     Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
                     Err(_) => {
                         println!("closing connection with: {}", addr);
