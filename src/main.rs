@@ -4,7 +4,7 @@ use std::sync::mpsc;
 use std::thread;
 
 const LOCAL: &str = "127.0.0.1:6000";
-const MSG_SIZE: usize = 32;
+const MSG_SIZE: usize = 128;
 
 fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
@@ -28,11 +28,8 @@ fn main() {
 
                 match socket.read_exact(&mut buff) {
                     Ok(_) => {
-                        let msg = buff.into_iter().take_while(|&x| x != 0).collect::<Vec<_>>();
-                        // let msg = String::from_utf8(msg).expect("Invalid utf8 message");
-
-                        println!("{}: {:?}", addr, msg);
-                        tx.send(msg).expect("failed to send msg to rx");
+                        println!("{}: {:?}", addr, buff);
+                        tx.send(buff).expect("failed to send msg to rx");
                     },
                     Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
                     Err(_) => {
