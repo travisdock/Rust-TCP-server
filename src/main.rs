@@ -4,7 +4,7 @@ use std::sync::mpsc;
 use std::thread;
 
 const LOCAL: &str = "127.0.0.1:6000";
-const MSG_SIZE: usize = 128;
+const MSG_SIZE: usize = 256;
 
 fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
