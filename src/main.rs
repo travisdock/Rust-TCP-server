@@ -28,7 +28,7 @@ fn main() {
 
                 match socket.read_exact(&mut buff) {
                     Ok(_) => {
-                        println!("{}: {:?}", addr, buff);
+                        // println!("{}: {:?}", addr, buff);
                         tx.send(buff).expect("failed to send msg to rx");
                     },
                     Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
