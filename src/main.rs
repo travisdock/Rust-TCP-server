@@ -11,46 +11,54 @@ fn sleep() {
 }
 
 fn main() {
-    let server = TcpListener::bind(LOCAL).expect("Listener failed to bind");
-    server.set_nonblocking(true).expect("failed to initialize non-blocking");
+    println!("Starting server...");
+    match TcpListener::bind(LOCAL) {
+        Ok(server) => {
+            server.set_nonblocking(true).expect("failed to initialize non-blocking");
+            println!("Ready to accept connections at: {}", server.local_addr().unwrap());
 
-    let mut clients = vec![];
-    let (tx, rx) = mpsc::channel::<Vec<u8>>();
-    loop {
-        if let Ok((mut socket, addr)) = server.accept() {
-            println!("Client {} connected", addr);
+            let mut clients = vec![];
+            let (tx, rx) = mpsc::channel::<Vec<u8>>();
+            loop {
+                if let Ok((mut socket, addr)) = server.accept() {
+                    println!("Client {} connected", addr);
 
-            let tx = tx.clone();
-            clients.push(socket.try_clone().expect("failed to clone client"));
+                    let tx = tx.clone();
+                    clients.push(socket.try_clone().expect("failed to clone client"));
 
-            thread::spawn(move || loop {
-                let mut buff = vec![0; MSG_SIZE];
+                    thread::spawn(move || loop {
+                        let mut buff = vec![0; MSG_SIZE];
 
-                match socket.read_exact(&mut buff) {
-                    Ok(_) => {
-                        // println!("{}: {:?}", addr, buff);
-                        tx.send(buff).expect("failed to send msg to rx");
-                    },
-                    Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
-                    Err(_) => {
-                        println!("closing connection with: {}", addr);
-                        break;
-                    }
+                        match socket.read_exact(&mut buff) {
+                            Ok(_) => {
+                                // println!("{}: {:?}", addr, buff);
+                                tx.send(buff).expect("failed to send msg to rx");
+                            },
+                            Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
+                            Err(_) => {
+                                println!("closing connection with: {}", addr);
+                                break;
+                            }
+                        }
+
+                        sleep();
+                    });
+                }
+
+                if let Ok(msg) = rx.try_recv() {
+                    clients = clients.into_iter().filter_map(|mut client| {
+                        let mut buff = msg.clone();
+                        buff.resize(MSG_SIZE, 0);
+
+                        client.write_all(&buff).map(|_| client).ok()
+                    }).collect::<Vec<_>>();
                 }
 
                 sleep();
-            });
+            }
+        },
+        Err(e) => {
+          println!("Could not start server because of error: \"{}\"", e)
         }
-
-        if let Ok(msg) = rx.try_recv() {
-            clients = clients.into_iter().filter_map(|mut client| {
-                let mut buff = msg.clone();
-                buff.resize(MSG_SIZE, 0);
-
-                client.write_all(&buff).map(|_| client).ok()
-            }).collect::<Vec<_>>();
-        }
-
-        sleep();
     }
 }
