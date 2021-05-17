@@ -11,3 +11,5 @@
 - `git tag -a vX.X.X -m "{description}"`
 - `git push origin vX.X.X`
 
+### Inspiration & Notes
+- Rust TCP Chat: https://github.com/tensor-programming/Rust_client-server_chat
